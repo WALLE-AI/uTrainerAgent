@@ -16,7 +16,7 @@ interface SessionItem {
 interface SidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
-    currentView: 'landing' | 'library' | 'session' | 'skills' | 'auth' | 'profile' | 'home' | 'knowledge' | 'overview' | 'datasets' | 'training';
+    currentView: 'landing' | 'library' | 'session' | 'skills' | 'auth' | 'profile' | 'home' | 'knowledge' | 'overview' | 'datasets' | 'training' | 'evaluation';
     onNavigate: (view: any) => void;
     user: { name: string; avatar: string } | null;
     currentSessionId?: string | null;
@@ -304,19 +304,31 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
                                     onClick={() => onNavigate('datasets')}
                                     className={`sidebar-item w-full pl-8 ${currentView === 'datasets' ? 'bg-brand-50 text-brand-700' : ''}`}
                                 >
-                                    数据集中心
+                                    数据集构建
                                 </button>
                                 <button
                                     onClick={() => onNavigate('training')}
                                     className={`sidebar-item w-full pl-8 ${currentView === 'training' ? 'bg-brand-50 text-brand-700' : ''}`}
                                 >
-                                    训练中心
+                                    任务追踪监控
+                                </button>
+                                <button
+                                    onClick={() => onNavigate('overview')}
+                                    className={`sidebar-item w-full pl-8 ${currentView === 'overview' ? 'bg-brand-50 text-brand-700' : ''}`}
+                                >
+                                    推理部署可观测
+                                </button>
+                                <button
+                                    onClick={() => onNavigate('evaluation')}
+                                    className={`sidebar-item w-full pl-8 ${currentView === 'evaluation' ? 'bg-brand-50 text-brand-700' : ''}`}
+                                >
+                                    基准评测比较
                                 </button>
                                 <button
                                     onClick={() => onNavigate('knowledge')}
                                     className={`sidebar-item w-full pl-8 ${currentView === 'knowledge' ? 'bg-brand-50 text-brand-700' : ''}`}
                                 >
-                                    知识库
+                                    知识库/语料集
                                 </button>
                             </div>
                         </>
