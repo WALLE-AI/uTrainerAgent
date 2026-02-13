@@ -1,0 +1,5 @@
+{
+  "name": "Integrated Training and Inference Platform",
+  "description": "A UI for an MLOps platform with a focus on data management, training, and deployment.",
+  "requestFramePermissions": []
+}

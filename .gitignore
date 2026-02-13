@@ -1,0 +1,25 @@
+# Ignore everything
+/*
+
+# Allow specific directories
+!/.agent/
+!/backend/
+!/frontend/
+!/frontend-agent/
+!/README.md
+!/.gitignore
+
+# Standard ignores within allowed directories
+**/node_modules/
+**/dist/
+**/build/
+**/.env
+**/.env.*
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/venv/
+**/.DS_Store
+**/.ipynb_checkpoints/
+**/logs/
+**/*.log
