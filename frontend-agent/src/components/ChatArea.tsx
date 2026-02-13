@@ -13,6 +13,7 @@ import { sessionService } from '../api/sessions';
 import { todoService } from '../api/todos';
 import { sessionLogService } from '../api/logs';
 import { fileService } from '../api/files';
+import { MOCK_DEMO_PROMPT, MOCK_TRAINING_STEPS, MOCK_TERMINAL_LOGS, MOCK_FINAL_LOGS, MOCK_FINAL_CONTENT } from '../utils/mockTrainingData';
 
 interface Message {
     id?: string;  // 添加ID字段用于React key
@@ -115,7 +116,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ actionName, initialPrompt, sessionI
                                         console.log('[ChatArea] Skipping empty assistant message:', msg.id);
                                         return;
                                     }
-                                    
+
                                     if (!uniqueMessages.has(msg.id)) {
                                         uniqueMessages.set(msg.id, {
                                             id: msg.id, // 添加 id 字段
@@ -239,7 +240,87 @@ const ChatArea: React.FC<ChatAreaProps> = ({ actionName, initialPrompt, sessionI
         return null;
     }, [onSessionCreated]);
 
+    const simulateMockTraining = useCallback(async (userMessage: string) => {
+        setIsExecuting(true);
+        isNewExecutionRef.current = true;
+        setSessionLogs([]);
+        setTodos([]);
+        setGeneratedFiles([]);
+
+        // 1. Initial Thinking
+        const assistantResponse: Message = {
+            id: `assistant-mock-${Date.now()}`,
+            role: 'assistant',
+            content: "",
+            thoughtSteps: [
+                { id: '1', title: '分析训练需求...', type: 'plan', status: 'active', reasoning: '正在分析 qwen3-4b-instruct 模型的 SFT 训练配置...' },
+            ]
+        };
+        setMessages(prev => [...prev, assistantResponse]);
+
+        // 2. Open Console and Start Steps
+        setTimeout(() => setIsConsoleOpen(true), 1500);
+
+        await new Promise(r => setTimeout(r, 2000));
+        setSessionLogs([MOCK_TRAINING_STEPS[0]]);
+        setMessages(prev => {
+            const last = prev[prev.length - 1];
+            return [...prev.slice(0, -1), {
+                ...last,
+                thoughtSteps: [
+                    { id: '1', title: '分析训练需求', type: 'plan', status: 'complete', reasoning: '分析完成。准备环境并加载数据集。' },
+                    { id: '2', title: '加载数据集', type: 'plan', status: 'active', reasoning: '' }
+                ]
+            }];
+        });
+
+        await new Promise(r => setTimeout(r, 2000));
+        setSessionLogs([MOCK_TRAINING_STEPS[0], MOCK_TRAINING_STEPS[1]]);
+        setMessages(prev => {
+            const last = prev[prev.length - 1];
+            const steps = [...(last.thoughtSteps || [])];
+            steps[1] = { ...steps[1], status: 'complete' };
+            steps.push({ id: '3', title: '初始化模型', type: 'plan', status: 'active', reasoning: '' });
+            return [...prev.slice(0, -1), { ...last, thoughtSteps: steps }];
+        });
+
+        // 3. Start Terminal Logs
+        await new Promise(r => setTimeout(r, 2000));
+        setSessionLogs([MOCK_TRAINING_STEPS[0], MOCK_TRAINING_STEPS[1], MOCK_TERMINAL_LOGS[0]]);
+
+        await new Promise(r => setTimeout(r, 1000));
+        setSessionLogs([MOCK_TRAINING_STEPS[0], MOCK_TRAINING_STEPS[1], MOCK_TERMINAL_LOGS[0], MOCK_TERMINAL_LOGS[1]]);
+
+        await new Promise(r => setTimeout(r, 1500));
+        setSessionLogs([MOCK_TRAINING_STEPS[0], MOCK_TRAINING_STEPS[1], MOCK_TERMINAL_LOGS[0], MOCK_TERMINAL_LOGS[1], MOCK_TRAINING_STEPS[2]]);
+
+        await new Promise(r => setTimeout(r, 1000));
+        setSessionLogs([MOCK_TRAINING_STEPS[0], MOCK_TRAINING_STEPS[1], MOCK_TERMINAL_LOGS[0], MOCK_TERMINAL_LOGS[1], MOCK_TRAINING_STEPS[2], MOCK_TERMINAL_LOGS[2]]);
+
+        // 4. Training Progress Simulation
+        await new Promise(r => setTimeout(r, 2000));
+        setSessionLogs(prev => [...prev, MOCK_TERMINAL_LOGS[3]]);
+
+        // 5. Finalize
+        await new Promise(r => setTimeout(r, 3000));
+        setSessionLogs(MOCK_FINAL_LOGS);
+        setMessages(prev => {
+            const last = prev[prev.length - 1];
+            return [...prev.slice(0, -1), {
+                ...last,
+                content: MOCK_FINAL_CONTENT,
+                thoughtSteps: (last.thoughtSteps || []).map(s => ({ ...s, status: 'complete' }))
+            }];
+        });
+        setIsExecuting(false);
+    }, []);
+
     const handleGetResponse = useCallback(async (userMessage: string) => {
+        // Intercept for demo
+        if (userMessage === MOCK_DEMO_PROMPT) {
+            return simulateMockTraining(userMessage);
+        }
+
         setIsExecuting(true);
 
         // 🔧 标记新执行开始,确保SSE事件处理不会累积旧状态

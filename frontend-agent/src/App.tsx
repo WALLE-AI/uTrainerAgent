@@ -14,9 +14,10 @@ import { DatasetConstruction } from './components/llmops/DatasetConstruction';
 import { ModelEvaluation } from './components/llmops/ModelEvaluation';
 import { NewTrainingWizard } from './components/llmops/NewTrainingWizard';
 import { InferenceObservability } from './components/llmops/InferenceObservability';
+import { ProcessManager } from './components/llmops/ProcessManager';
 import { LlmOpsLayout } from './components/llmops/LlmOpsLayout';
 
-type ViewType = 'landing' | 'library' | 'session' | 'skills' | 'auth' | 'profile' | 'home' | 'knowledge' | 'overview' | 'datasets' | 'training' | 'evaluation';
+type ViewType = 'landing' | 'library' | 'session' | 'skills' | 'auth' | 'profile' | 'home' | 'knowledge' | 'overview' | 'datasets' | 'training' | 'evaluation' | 'processes';
 
 interface User {
   name: string;
@@ -195,6 +196,11 @@ function App() {
               isOpen={isTrainingWizardOpen}
               onClose={() => setIsTrainingWizardOpen(false)}
             />
+          </LlmOpsLayout>
+        )}
+        {currentView === 'processes' && (
+          <LlmOpsLayout>
+            <ProcessManager />
           </LlmOpsLayout>
         )}
         {currentView === 'evaluation' && (

@@ -16,7 +16,7 @@ interface SessionItem {
 interface SidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
-    currentView: 'landing' | 'library' | 'session' | 'skills' | 'auth' | 'profile' | 'home' | 'knowledge' | 'overview' | 'datasets' | 'training' | 'evaluation';
+    currentView: 'landing' | 'library' | 'session' | 'skills' | 'auth' | 'profile' | 'home' | 'knowledge' | 'overview' | 'datasets' | 'training' | 'evaluation' | 'processes';
     onNavigate: (view: any) => void;
     user: { name: string; avatar: string } | null;
     currentSessionId?: string | null;
@@ -323,6 +323,12 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
                                     className={`sidebar-item w-full pl-8 ${currentView === 'evaluation' ? 'bg-brand-50 text-brand-700' : ''}`}
                                 >
                                     基准评测比较
+                                </button>
+                                <button
+                                    onClick={() => onNavigate('processes')}
+                                    className={`sidebar-item w-full pl-8 ${currentView === 'processes' ? 'bg-brand-50 text-brand-700' : ''}`}
+                                >
+                                    后台任务监控
                                 </button>
                                 <button
                                     onClick={() => onNavigate('knowledge')}
