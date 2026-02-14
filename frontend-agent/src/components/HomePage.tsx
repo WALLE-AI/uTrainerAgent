@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Plus, Globe, Mic, Send, Paperclip, Puzzle } from 'lucide-react';
+import { Plus, Globe, Mic, Send, Paperclip, Puzzle, Database, Zap, Cpu, Sparkles, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FilePreviewItem from './FilePreviewItem';
 import type { UploadedFile } from './FilePreviewItem';
@@ -75,13 +75,31 @@ const HomePage: React.FC<HomePageProps> = ({ onStart }) => {
         <div className="flex-1 bg-white flex flex-col items-center justify-center px-4 overflow-y-auto min-h-full">
             <div className="w-full max-w-3xl flex flex-col items-center -mt-20">
                 {/* Header */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 text-[11px] font-black uppercase tracking-[0.2em] mb-6"
+                >
+                    <Sparkles size={12} fill="currentColor" />
+                    <span>uTrainer Pro Agent</span>
+                </motion.div>
                 <motion.h1
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-3xl md:text-4xl font-bold text-slate-800 mb-12 text-center"
+                    transition={{ delay: 0.1 }}
+                    className="text-4xl md:text-5xl font-black text-slate-900 mb-6 text-center leading-tight"
                 >
-                    今天可以帮你做什么？
+                    专业级 <span className="text-indigo-600">LLMOps</span> 协作空间
                 </motion.h1>
+                <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-slate-500 text-center mb-12 max-w-xl text-lg font-medium leading-relaxed"
+                >
+                    通过自然语言驱动全链路模型训练、数据集构建与推理部署，
+                    让 AI 开发变得像聊天一样简单。
+                </motion.p>
 
                 {/* Command Center */}
                 <motion.div
@@ -381,6 +399,34 @@ const HomePage: React.FC<HomePageProps> = ({ onStart }) => {
                     onClose={() => setIsAddConnectorModalOpen(false)}
                 />
 
+                {/* Quick Actions / Templates */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-4"
+                >
+                    {[
+                        { title: '数据集构建', desc: '自动化清理、打标与增强', icon: <Database className="text-blue-500" />, color: 'bg-blue-50', prompt: '帮我构建一个专门用于中文学术论文润色的 SFT 数据集' },
+                        { title: '模型微调', desc: '一键启动多机多卡训练任务', icon: <Zap className="text-amber-500" />, color: 'bg-amber-50', prompt: '使用 Llama-3-8B 基础模型，在我刚上传的文档上进行 LoRA 微调' },
+                        { title: '部署与评测', desc: '可观测推理服务与质量对齐', icon: <Cpu className="text-emerald-500" />, color: 'bg-emerald-50', prompt: '将微调后的模型部署为 API 服务，并进行自动 Eval 评测' },
+                    ].map((card, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => setInputText(card.prompt)}
+                            className="flex flex-col items-start p-5 rounded-3xl bg-white border border-slate-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all group text-left"
+                        >
+                            <div className={`w-12 h-12 rounded-2xl ${card.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                                {card.icon}
+                            </div>
+                            <h3 className="text-base font-black text-slate-800 mb-1 group-hover:text-indigo-600 transition-colors uppercase tracking-wider">{card.title}</h3>
+                            <p className="text-xs text-slate-400 font-medium mb-4">{card.desc}</p>
+                            <div className="flex items-center gap-1 text-[11px] font-black text-indigo-500 uppercase tracking-widest mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                                立即开始 <ChevronRight size={12} />
+                            </div>
+                        </button>
+                    ))}
+                </motion.div>
             </div>
         </div>
     );

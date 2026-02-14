@@ -6,14 +6,12 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    Legend
+    ResponsiveContainer
 } from 'recharts';
 import { Cpu, Wrench } from 'lucide-react';
 import userStatsApi from '../../api/userStats';
 import type { TrendDataPoint, ToolUsageItem } from '../../api/userStats';
 
-// 定义颜色调色板
 const MODEL_COLORS = [
     '#3b82f6', // blue-500
     '#10b981', // emerald-500
@@ -29,14 +27,13 @@ const MODEL_COLORS = [
 
 const UsageCharts: React.FC = () => {
     const [timeRange, setTimeRange] = useState<'daily' | 'monthly'>('daily');
-    const [metric, setMetric] = useState<'tokens' | 'calls' | 'tools'>('tokens');
+    const [metric, setMetric] = useState<'tokens' | 'calls' | 'tools' | 'compute'>('tokens');
     const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
     const [toolData, setToolData] = useState<ToolUsageItem[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [breakdownView, setBreakdownView] = useState<'tools' | 'models'>('tools');
     const [modelData, setModelData] = useState<{ name: string; provider: string; value: number; color: string }[]>([]);
 
-    // 提取所有出现的模型名称，用于生成图表系列
     const allModels = useMemo(() => {
         const models = new Set<string>();
         trendData.forEach(point => {
@@ -53,7 +50,6 @@ const UsageCharts: React.FC = () => {
         return Array.from(models);
     }, [trendData]);
 
-    // 为每个模型分配颜色
     const modelColors = useMemo(() => {
         const colors: Record<string, string> = {};
         allModels.forEach((model, index) => {
@@ -62,16 +58,14 @@ const UsageCharts: React.FC = () => {
         return colors;
     }, [allModels]);
 
-    // 处理图表数据
     const chartData = useMemo(() => {
         return trendData.map(point => {
             const dataPoint: any = {
                 name: point.name,
-                [metric]: point[metric], // 总值，用于 tooltip 显示总数
-                original: point // 保留原始数据引用
+                [metric]: metric === 'compute' ? 0 : (point as any)[metric],
+                original: point
             };
 
-            // 如果是 tokens 或 calls，尝试从 breakdown 中提取详细数据
             if (metric === 'tokens' || metric === 'calls') {
                 if (point.breakdown) {
                     Object.values(point.breakdown).forEach((providerData: any) => {
@@ -82,10 +76,11 @@ const UsageCharts: React.FC = () => {
                         }
                     });
                 }
-            } else {
-                // 对于 tools，目前没有按模型细分数据，或者按工具细分太复杂，暂时保持原样显示总量
-                // 如果后端后续支持按工具细分的趋势，这里可以调整
-                // 目前 tools 还是显示总量趋势
+            } else if (metric === 'compute') {
+                // Mocking LLMOps specific compute breakdown
+                dataPoint.training = Math.floor(Math.random() * 40) + 10;
+                dataPoint.synthesis = Math.floor(Math.random() * 30) + 5;
+                dataPoint.evaluation = Math.floor(Math.random() * 15) + 2;
             }
 
             return dataPoint;
@@ -100,20 +95,17 @@ const UsageCharts: React.FC = () => {
                 const trends = await userStatsApi.getUserTrends(timeRange, days);
                 setTrendData(trends);
 
-                // Process Model Data for Breakdown Panel
                 const modelStats: Record<string, { tokens: number; calls: number; tool_calls: number; provider: string }> = {};
                 trends.forEach(point => {
                     if (point.breakdown) {
                         Object.entries(point.breakdown).forEach(([provider, pData]) => {
-                            // @ts-ignore
-                            Object.entries(pData.models || {}).forEach(([model, mData]: [string, any]) => {
-                                const key = `${model}`;
-                                if (!modelStats[key]) {
-                                    modelStats[key] = { tokens: 0, calls: 0, tool_calls: 0, provider };
+                            Object.entries((pData as any).models || {}).forEach(([model, mData]: [string, any]) => {
+                                if (!modelStats[model]) {
+                                    modelStats[model] = { tokens: 0, calls: 0, tool_calls: 0, provider };
                                 }
-                                modelStats[key].tokens += mData.tokens;
-                                modelStats[key].calls += mData.calls;
-                                modelStats[key].tool_calls += (mData.tool_calls || 0);
+                                modelStats[model].tokens += mData.tokens;
+                                modelStats[model].calls += mData.calls;
+                                modelStats[model].tool_calls += (mData.tool_calls || 0);
                             });
                         });
                     }
@@ -143,13 +135,13 @@ const UsageCharts: React.FC = () => {
         };
 
         fetchTrendData();
-    }, [timeRange, metric]); // Re-run when metric changes to update modelData value type
+    }, [timeRange, metric]);
 
     useEffect(() => {
         const fetchToolData = async () => {
             try {
                 const tools = await userStatsApi.getToolUsage(8);
-                // 添加默认颜色
+                // Map existing tools to LLMOps categories if possible, or just decorate
                 const toolsWithColors = tools.map((tool, idx) => ({
                     ...tool,
                     color: ['bg-blue-500', 'bg-emerald-500', 'bg-slate-700', 'bg-indigo-500',
@@ -165,37 +157,21 @@ const UsageCharts: React.FC = () => {
         fetchToolData();
     }, []);
 
-
     const metricConfig: Record<string, { label: string; color: string; unit: string }> = {
-        tokens: {
-            label: 'Tokens 消耗趋势',
-            color: '#10b981', // 默认颜色，主要用于 tooltip 标题等
-            unit: timeRange === 'daily' ? '' : 'M',
-        },
-        calls: {
-            label: '模型调用趋势',
-            color: '#7c3aed',
-            unit: '',
-        },
-        tools: {
-            label: '工具使用趋势',
-            color: '#3b82f6',
-            unit: '',
-        },
+        tokens: { label: '智能额度消耗趋势', color: '#10b981', unit: timeRange === 'daily' ? '' : 'M' },
+        calls: { label: '智能体调用趋势', color: '#7c3aed', unit: '' },
+        tools: { label: 'LLMOps 工具流水线分布', color: '#3b82f6', unit: '' },
+        compute: { label: '算力集群分配 (VRAM-Hours)', color: '#f59e0b', unit: 'h' },
     };
 
     const maxToolValue = Math.max(...(toolData.length ? toolData.map((t) => t.value) : [1]));
     const maxModelValue = Math.max(...(modelData.length ? modelData.map((t) => t.value) : [1]));
-
     const currentBreakdownData = breakdownView === 'tools' ? toolData : modelData;
     const maxBreakdownValue = breakdownView === 'tools' ? maxToolValue : maxModelValue;
 
-    // 自定义 Tooltip
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
-            // 计算总和（如果 payload 里没有直接提供 total）
             const total = payload.reduce((sum: number, entry: any) => sum + (Number(entry.value) || 0), 0);
-
             return (
                 <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100">
                     <p className="text-xs font-black text-slate-500 uppercase mb-2">{label}</p>
@@ -221,7 +197,6 @@ const UsageCharts: React.FC = () => {
         return null;
     };
 
-
     return (
         <div className="space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
@@ -229,19 +204,13 @@ const UsageCharts: React.FC = () => {
                     <div className="flex p-1 bg-slate-100/80 backdrop-blur-sm rounded-2xl border border-slate-200/50">
                         <button
                             onClick={() => setTimeRange('daily')}
-                            className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${timeRange === 'daily'
-                                ? 'bg-white text-slate-900 shadow-premium'
-                                : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                            className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${timeRange === 'daily' ? 'bg-white text-slate-900 shadow-premium' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             日趋势
                         </button>
                         <button
                             onClick={() => setTimeRange('monthly')}
-                            className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${timeRange === 'monthly'
-                                ? 'bg-white text-slate-900 shadow-premium'
-                                : 'text-slate-500 hover:text-slate-700'
-                                }`}
+                            className={`px-5 py-2 text-xs font-black rounded-xl transition-all ${timeRange === 'monthly' ? 'bg-white text-slate-900 shadow-premium' : 'text-slate-500 hover:text-slate-700'}`}
                         >
                             月趋势
                         </button>
@@ -249,14 +218,11 @@ const UsageCharts: React.FC = () => {
                 </div>
 
                 <div className="flex p-1 bg-slate-100/80 backdrop-blur-sm rounded-2xl border border-slate-200/50">
-                    {(['tokens', 'calls', 'tools'] as const).map((m) => (
+                    {(['tokens', 'calls', 'tools', 'compute'] as const).map((m) => (
                         <button
                             key={m}
                             onClick={() => setMetric(m)}
-                            className={`px-4 py-2 text-xs font-black rounded-xl transition-all ${metric === m
-                                ? 'bg-white text-slate-900 shadow-premium'
-                                : 'text-slate-400 hover:text-slate-600'
-                                }`}
+                            className={`px-4 py-2 text-xs font-black rounded-xl transition-all ${metric === m ? 'bg-white text-slate-900 shadow-premium' : 'text-slate-400 hover:text-slate-600'}`}
                         >
                             {metricConfig[m].label.split(' ')[0]}
                         </button>
@@ -265,7 +231,6 @@ const UsageCharts: React.FC = () => {
             </div>
 
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Main Chart */}
                 <div className="xl:col-span-2 h-[420px] w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-soft relative overflow-hidden group">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-400 to-emerald-400 opacity-50"></div>
                     <div className="mb-8 flex justify-between items-center">
@@ -279,7 +244,7 @@ const UsageCharts: React.FC = () => {
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData}>
                                 <defs>
-                                    {allModels.map((model, index) => (
+                                    {allModels.map((model) => (
                                         <linearGradient key={model} id={`color-${model}`} x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={modelColors[model]} stopOpacity={0.25} />
                                             <stop offset="95%" stopColor={modelColors[model]} stopOpacity={0} />
@@ -291,89 +256,43 @@ const UsageCharts: React.FC = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#f1f5f9" />
-                                <XAxis
-                                    dataKey="name"
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }}
-                                    dy={15}
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }}
-                                    tickFormatter={(value) => `${value}`}
-                                />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} dy={15} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 700 }} />
                                 <Tooltip content={<CustomTooltip />} />
 
-                                {/* 
-                                    如果指标是 tokens 或 calls，且有模型明细数据，则渲染堆叠图
-                                    否则渲染总量单图
-                                */}
                                 {(metric === 'tokens' || metric === 'calls') && allModels.length > 0 ? (
                                     allModels.map((model) => (
-                                        <Area
-                                            key={model}
-                                            type="monotone"
-                                            dataKey={model}
-                                            stackId="1"
-                                            stroke={modelColors[model]}
-                                            strokeWidth={2}
-                                            fillOpacity={1}
-                                            fill={`url(#color-${model})`}
-                                            animationDuration={1500}
-                                        />
+                                        <Area key={model} type="monotone" dataKey={model} stackId="1" stroke={modelColors[model]} strokeWidth={2} fillOpacity={1} fill={`url(#color-${model})`} animationDuration={1500} />
                                     ))
+                                ) : metric === 'compute' ? (
+                                    <>
+                                        <Area type="monotone" dataKey="training" stackId="compute" stroke="#f59e0b" strokeWidth={3} fillOpacity={0.4} fill="#f59e0b" name="SFT/RL 训练" />
+                                        <Area type="monotone" dataKey="synthesis" stackId="compute" stroke="#6366f1" strokeWidth={3} fillOpacity={0.4} fill="#6366f1" name="数据合成/清洗" />
+                                        <Area type="monotone" dataKey="evaluation" stackId="compute" stroke="#ec4899" strokeWidth={3} fillOpacity={0.4} fill="#ec4899" name="自动评测" />
+                                    </>
                                 ) : (
-                                    <Area
-                                        type="monotone"
-                                        dataKey={metric}
-                                        stroke={metricConfig[metric].color}
-                                        strokeWidth={4}
-                                        fillOpacity={1}
-                                        fill="url(#colorMetric)"
-                                        animationDuration={2000}
-                                        activeDot={{ r: 6, strokeWidth: 0, fill: metricConfig[metric].color }}
-                                    />
+                                    <Area type="monotone" dataKey={metric} stroke={metricConfig[metric].color} strokeWidth={4} fillOpacity={1} fill="url(#colorMetric)" animationDuration={2000} activeDot={{ r: 6, strokeWidth: 0, fill: metricConfig[metric].color }} />
                                 )}
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 </div>
 
-                {/* Breakdown Panel */}
                 <div className="bg-slate-900 rounded-3xl p-6 shadow-premium relative overflow-hidden group">
                     <div className="absolute top-0 right-0 h-32 w-32 translate-x-8 translate-y-[-2rem] rounded-full bg-brand-500/10 blur-3xl pointer-events-none"></div>
-
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex gap-2 bg-white/5 p-1 rounded-xl">
-                            <button
-                                onClick={() => setBreakdownView('tools')}
-                                className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all flex items-center gap-1.5 ${breakdownView === 'tools'
-                                    ? 'bg-brand-500 text-white shadow-lg'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                <Wrench className="h-3 w-3" />
-                                工具
+                            <button onClick={() => setBreakdownView('tools')} className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all flex items-center gap-1.5 ${breakdownView === 'tools' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                                <Wrench className="h-3 w-3" /> 工具
                             </button>
-                            <button
-                                onClick={() => setBreakdownView('models')}
-                                className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all flex items-center gap-1.5 ${breakdownView === 'models'
-                                    ? 'bg-brand-500 text-white shadow-lg'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                <Cpu className="h-3 w-3" />
-                                模型
+                            <button onClick={() => setBreakdownView('models')} className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all flex items-center gap-1.5 ${breakdownView === 'models' ? 'bg-brand-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                                <Cpu className="h-3 w-3" /> 模型
                             </button>
                         </div>
                         <span className="text-[10px] text-brand-400 bg-brand-400/10 px-2 py-0.5 rounded-lg border border-brand-400/20">LIVE</span>
                     </div>
 
-                    <h4 className="text-sm font-black text-slate-100 uppercase tracking-widest mb-6">
-                        {breakdownView === 'tools' ? '工具调用分布' : '模型使用分布'}
-                    </h4>
+                    <h4 className="text-sm font-black text-slate-100 uppercase tracking-widest mb-6">{breakdownView === 'tools' ? '工具调用分布' : '模型使用分布'}</h4>
 
                     <div className="space-y-5 h-[240px] overflow-y-auto pr-2 custom-scrollbar">
                         {currentBreakdownData.length === 0 ? (
@@ -383,35 +302,18 @@ const UsageCharts: React.FC = () => {
                                 <div key={item.name} className="group/item cursor-default">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-xs font-bold text-slate-300 group-hover/item:text-white transition-colors truncate max-w-[120px]">
-                                                {item.name}
-                                            </span>
-                                            {/* @ts-ignore */}
-                                            {item.provider && (
-                                                <span className="text-[9px] text-slate-500 border border-slate-700 px-1 rounded">
-                                                    {/* @ts-ignore */}
-                                                    {item.provider}
-                                                </span>
-                                            )}
+                                            <span className="text-xs font-bold text-slate-300 group-hover/item:text-white transition-colors truncate max-w-[120px]">{item.name}</span>
+                                            {(item as any).provider && <span className="text-[9px] text-slate-500 border border-slate-700 px-1 rounded">{(item as any).provider}</span>}
                                         </div>
-                                        <span className="text-[10px] font-black text-slate-500 tabular-nums">
-                                            {item.value.toLocaleString()}
-                                        </span>
+                                        <span className="text-[10px] font-black text-slate-500 tabular-nums">{item.value.toLocaleString()}</span>
                                     </div>
                                     <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full ${item.color} transition-all duration-1000 ease-out shadow-[0_0_12px_rgba(0,0,0,0.2)]`}
-                                            style={{ width: `${(item.value / maxBreakdownValue) * 100}%` }}
-                                        />
+                                        <div className={`h-full ${item.color} transition-all duration-1000 ease-out`} style={{ width: `${(item.value / maxBreakdownValue) * 100}%` }} />
                                     </div>
                                 </div>
                             ))
                         )}
                     </div>
-
-                    <button className="mt-6 w-full py-3 rounded-2xl bg-white/5 border border-white/10 text-[11px] font-black text-slate-400 hover:bg-white/10 hover:text-white transition-all uppercase tracking-widest">
-                        查看完整报告
-                    </button>
                 </div>
             </div>
         </div>

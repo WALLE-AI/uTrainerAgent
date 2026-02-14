@@ -7,11 +7,6 @@ interface AuthPageProps {
     onBack: () => void;
 }
 
-interface TokenResponse {
-    token: string;
-    refresh_token: string;
-}
-
 const AuthPage = ({ onLoginSuccess, onBack }: AuthPageProps) => {
     const [mode, setMode] = useState<'login' | 'register'>('login');
     const [email, setEmail] = useState('');
@@ -63,6 +58,24 @@ const AuthPage = ({ onLoginSuccess, onBack }: AuthPageProps) => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleGuestLogin = () => {
+        setIsLoading(true);
+        setTimeout(() => {
+            // 设置模拟 Token
+            localStorage.setItem('auth_token', 'mock_token_for_dev_bypass');
+            localStorage.setItem('refresh_token', 'mock_refresh_token_for_dev_bypass');
+
+            const userData = {
+                name: 'uTrainer Admin',
+                email: 'admin@utrainer.ai',
+                avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=uTrainer`
+            };
+
+            onLoginSuccess(userData);
+            setIsLoading(false);
+        }, 800);
     };
 
     return (
@@ -171,6 +184,18 @@ const AuthPage = ({ onLoginSuccess, onBack }: AuthPageProps) => {
                                     </>
                                 )}
                             </button>
+
+                            {mode === 'login' && (
+                                <button
+                                    type="button"
+                                    onClick={handleGuestLogin}
+                                    disabled={isLoading}
+                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 py-3 text-sm font-bold text-white transition-all hover:bg-slate-800 active:scale-[0.98] disabled:opacity-70"
+                                >
+                                    <ShieldCheck className="h-4 w-4 text-brand-400" />
+                                    <span>无需认证，直接登录</span>
+                                </button>
+                            )}
                         </form>
 
                         <div className="mt-8">

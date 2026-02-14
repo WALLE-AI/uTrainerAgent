@@ -52,21 +52,28 @@ const strategies = [
     { id: 'distilabel', name: 'Distilabel', desc: '多模型协同蒸馏' }
 ];
 
+const datasetAssets = [
+    { id: 'DS-001', name: 'MedQA-Refined-V1', type: 'SFT', count: '125,400', size: '1.2GB', score: 0.92, date: '2024-05-20' },
+    { id: 'DS-002', name: 'Legal-Instruct-Pro', type: 'DPO', count: '45,000', size: '450MB', score: 0.88, date: '2024-05-19' },
+    { id: 'DS-003', name: 'VQA-Architecture-Base', type: 'Vision', count: '82,000', size: '12.5GB', score: 0.85, date: '2024-05-18' },
+    { id: 'DS-004', name: 'Code-Synth-Alpaca', type: 'Synthesis', count: '210,000', size: '2.1GB', score: 0.94, date: '2024-05-17' },
+];
+
 export const DatasetConstruction: React.FC = () => {
+    const [view, setView] = useState<'assets' | 'studio' | 'execution'>('assets');
     const [selectedFlow, setSelectedFlow] = useState<string | null>(null);
-    const [step, setStep] = useState<'selection' | 'execution'>('selection');
 
     const handleStart = () => {
-        setStep('execution');
+        setView('execution');
     };
 
-    if (step === 'execution') {
+    if (view === 'execution') {
         return (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => setStep('selection')}
+                            onClick={() => setView('studio')}
                             className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                         >
                             <Icon path={ICONS.arrowLeft} className="w-5 h-5 text-slate-400" />
@@ -136,14 +143,88 @@ export const DatasetConstruction: React.FC = () => {
         );
     }
 
+    if (view === 'assets') {
+        return (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 text-left">
+                <header className="flex justify-between items-end">
+                    <div>
+                        <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none">
+                            数据集资产 <span className="text-indigo-600">Assets</span>
+                        </h1>
+                        <p className="mt-2 text-slate-500 font-medium text-xs">管理已构建的高质量数据集及其元数据信息。</p>
+                    </div>
+                    <button
+                        onClick={() => setView('studio')}
+                        className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all active:scale-95"
+                    >
+                        + 构建新数据集
+                    </button>
+                </header>
+
+                <div className="bg-white/70 backdrop-blur-xl border border-slate-100 rounded-[32px] overflow-hidden shadow-sm">
+                    <table className="w-full text-left">
+                        <thead className="bg-slate-50/50">
+                            <tr>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">数据集名称 Name</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">任务类型 Type</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">数据量 Count</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">磁盘占用 Size</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">质量评分 Score</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">创建日期 Date</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-50">
+                            {datasetAssets.map(asset => (
+                                <tr key={asset.id} className="hover:bg-slate-50/50 transition-colors group">
+                                    <td className="px-6 py-4">
+                                        <p className="text-sm font-black text-slate-900">{asset.name}</p>
+                                        <p className="text-[10px] text-slate-400 font-mono mt-0.5">{asset.id}</p>
+                                    </td>
+                                    <td className="px-6 py-4 text-center">
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${asset.type === 'SFT' ? 'bg-indigo-100 text-indigo-600' :
+                                            asset.type === 'DPO' ? 'bg-rose-100 text-rose-600' :
+                                                asset.type === 'Vision' ? 'bg-amber-100 text-amber-600' :
+                                                    'bg-emerald-100 text-emerald-600'
+                                            }`}>
+                                            {asset.type}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-4 text-center font-mono text-xs font-bold text-slate-700">{asset.count}</td>
+                                    <td className="px-6 py-4 text-center font-mono text-xs text-slate-500">{asset.size}</td>
+                                    <td className="px-6 py-4 text-center">
+                                        <div className="flex items-center justify-center gap-2">
+                                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                <div className="h-full bg-indigo-500" style={{ width: `${asset.score * 100}%` }} />
+                                            </div>
+                                            <span className="text-[10px] font-black text-slate-400">{asset.score.toFixed(2)}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4 text-right text-xs text-slate-400 font-medium">{asset.date}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-12 animate-in fade-in slide-in-from-top-4 duration-700">
             <header className="flex justify-between items-end">
-                <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">
-                        数据集构建工作室 <br /><span className="text-indigo-600">Studio</span>
-                    </h1>
-                    <p className="mt-4 text-slate-500 font-medium text-sm max-w-lg">
+                <div className="text-left">
+                    <div className="flex items-center gap-4 mb-4">
+                        <button
+                            onClick={() => setView('assets')}
+                            className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                        >
+                            <Icon path={ICONS.arrowLeft} className="w-5 h-5 text-slate-400" />
+                        </button>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase leading-none">
+                            数据集构建工作室 <br /><span className="text-indigo-600">Studio</span>
+                        </h1>
+                    </div>
+                    <p className="text-slate-500 font-medium text-sm max-w-lg">
                         使用 SOTA 合成技术与 LLM 指令增强方案，构建属于你的高质量、私域化的模型训练语料。
                     </p>
                 </div>
@@ -162,8 +243,8 @@ export const DatasetConstruction: React.FC = () => {
                         whileHover={{ y: -8, scale: 1.02 }}
                         onClick={() => setSelectedFlow(flow.id)}
                         className={`p-8 rounded-[40px] border text-left transition-all relative group overflow-hidden ${selectedFlow === flow.id
-                                ? 'bg-slate-900 border-slate-900 text-white shadow-2xl shadow-indigo-200 lg:scale-[1.05]'
-                                : 'bg-white border-slate-100 text-slate-600 hover:border-indigo-200'
+                            ? 'bg-slate-900 border-slate-900 text-white shadow-2xl shadow-indigo-200 lg:scale-[1.05]'
+                            : 'bg-white border-slate-100 text-slate-600 hover:border-indigo-200'
                             }`}
                     >
                         {selectedFlow === flow.id && (
@@ -198,7 +279,7 @@ export const DatasetConstruction: React.FC = () => {
                         className="bg-slate-50 border border-slate-100 rounded-[48px] p-10 lg:p-14 shadow-sm"
                     >
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-                            <div className="lg:col-span-8 space-y-8">
+                            <div className="lg:col-span-8 space-y-8 text-left">
                                 <div>
                                     <h3 className="text-xs font-black text-slate-900 uppercase tracking-[0.2em] mb-6">选择构建策略 / Selecting Strategy</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -231,7 +312,7 @@ export const DatasetConstruction: React.FC = () => {
                             <div className="lg:col-span-4 flex flex-col justify-end">
                                 <div className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-xl space-y-6">
                                     <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest">预估成本 / Estimation</h4>
-                                    <div className="space-y-3">
+                                    <div className="space-y-3 text-left">
                                         <div className="flex justify-between text-xs font-medium">
                                             <span className="text-slate-400">Tokens</span>
                                             <span className="text-slate-900 font-bold">~15.4M</span>

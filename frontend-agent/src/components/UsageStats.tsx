@@ -1,116 +1,80 @@
-import { useState, useEffect } from 'react';
-import type { LucideIcon } from 'lucide-react';
-import { Cpu, Zap, Activity } from 'lucide-react';
-import userStatsApi from '../api/userStats';
-import type { UserOverviewStats } from '../api/userStats';
+import { useEffect } from 'react';
+import { MessageSquare, BookOpen, CheckCircle } from 'lucide-react';
 
 const UsageStats = () => {
-    const [stats, setStats] = useState<UserOverviewStats | null>(null);
-    const [loading, setLoading] = useState(true);
+    // const [stats, setStats] = useState<UserOverviewStats | null>(null);
+    // const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                setLoading(true);
-                const data = await userStatsApi.getUserOverview();
-                setStats(data);
+                // const data = await userStatsApi.getUserOverview();
+                // setStats(data);
             } catch (err) {
                 console.error('Failed to fetch usage stats:', err);
-            } finally {
-                setLoading(false);
             }
         };
 
         fetchStats();
     }, []);
 
-    const formatNumber = (num: number): string => {
-        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-        if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-        return num.toString();
-    };
 
-    const statsConfig = stats ? [
+    const statsConfig = [
         {
-            label: '模型调用次数',
-            innerLabel: 'Model Calls',
-            value: loading ? '...' : formatNumber(stats.totalModelCalls),
-            trend: '+0%', // TODO: 计算趋势需要历史数据
-            icon: <Cpu size={18} className="text-indigo-500" />,
+            label: '智能体交互',
+            innerLabel: 'Agent Interactions',
+            value: '2.4k 次',
+            trend: '+15%',
+            icon: <MessageSquare size={18} className="text-indigo-500" />,
             color: 'bg-indigo-50'
         },
         {
-            label: '工具调用总数',
-            innerLabel: 'Tool Calls',
-            value: loading ? '...' : formatNumber(stats.totalToolCalls),
-            trend: '+0%',
-            icon: <Zap size={18} className="text-amber-500" />,
+            label: '知识库扩充',
+            innerLabel: 'KB Items Added',
+            value: '128 篇',
+            trend: '+8.4%',
+            icon: <BookOpen size={18} className="text-amber-500" />,
             color: 'bg-amber-50'
         },
         {
-            label: 'Tokens 消耗总计',
-            innerLabel: 'Total Tokens',
-            value: loading ? '...' : formatNumber(stats.totalTokensUsed),
-            trend: '+0%',
-            icon: <Activity size={18} className="text-emerald-500" />,
-            color: 'bg-emerald-50'
-        }
-    ] : [
-        {
-            label: '模型调用次数',
-            innerLabel: 'Model Calls',
-            value: '0',
-            trend: '+0%',
-            icon: <Cpu size={18} className="text-indigo-500" />,
-            color: 'bg-indigo-50'
-        },
-        {
-            label: '工具调用总数',
-            innerLabel: 'Tool Calls',
-            value: '0',
-            trend: '+0%',
-            icon: <Zap size={18} className="text-amber-500" />,
-            color: 'bg-amber-50'
-        },
-        {
-            label: 'Tokens 消耗总计',
-            innerLabel: 'Total Tokens',
-            value: '0',
-            trend: '+0%',
-            icon: <Activity size={18} className="text-emerald-500" />,
+            label: '任务成功率',
+            innerLabel: 'Task Success Rate',
+            value: '98.2%',
+            trend: 'Optimized',
+            icon: <CheckCircle size={18} className="text-emerald-500" />,
             color: 'bg-emerald-50'
         }
     ];
 
     return (
         <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {statsConfig.map((stat, index) => (
                     <div
                         key={index}
-                        className="group relative overflow-hidden rounded-2xl border border-slate-100 bg-white p-5 shadow-soft transition-all hover:shadow-premium hover:scale-[1.02] cursor-default"
+                        className="group relative overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white p-7 shadow-soft transition-all hover:shadow-premium hover:-translate-y-1 cursor-default"
                     >
                         <div className="relative z-10">
-                            <div className="flex items-start justify-between mb-3.5">
-                                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.color} border border-white shadow-soft transition-transform group-hover:scale-110`}>
+                            <div className="flex items-start justify-between mb-6">
+                                <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${stat.color} border border-white shadow-soft transition-all group-hover:scale-110 group-hover:rotate-3`}>
                                     {stat.icon}
                                 </div>
-                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100 uppercase tracking-tight">
+                                <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100 uppercase tracking-widest">
                                     {stat.trend}
                                 </span>
                             </div>
-                            <div className="text-2xl font-black text-slate-900 mb-1 tabular-nums">
+                            <div className="text-3xl font-black text-slate-900 mb-1 tracking-tight">
                                 {stat.value}
                             </div>
-                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">
+                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5 opacity-60">
                                 {stat.innerLabel}
                             </div>
-                            <div className="text-[13px] font-bold text-slate-700">
+                            <div className="text-xs font-black text-indigo-700/80 uppercase tracking-widest">
                                 {stat.label}
                             </div>
                         </div>
 
-                        <div className="absolute bottom-0 right-0 h-20 w-20 translate-x-8 translate-y-8 rounded-full bg-gradient-to-br from-slate-100 to-transparent opacity-0 transition-opacity group-hover:opacity-100"></div>
+                        <div className="absolute top-0 right-0 h-32 w-32 translate-x-16 translate-y-[-2rem] rounded-full bg-slate-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
                 ))}
             </div>

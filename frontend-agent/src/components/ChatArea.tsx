@@ -58,6 +58,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ actionName, initialPrompt, sessionI
     const [todos, setTodos] = useState<Array<{ id: string; content: string; status: 'pending' | 'in_progress' | 'completed' | 'failed'; priority: number; output?: string }>>([]);
     const [generatedFiles, setGeneratedFiles] = useState<Array<{ path: string; name: string; action: string; size: number; timestamp: Date; url?: string }>>([]);
     const [sessionLogs, setSessionLogs] = useState<Array<{ id?: string; type: string; title: string; content?: string; status: 'active' | 'complete' | 'error'; timestamp: Date; toolName?: string }>>([]);
+    const [activeConsoleTab, setActiveConsoleTab] = useState<'session' | 'terminal' | 'dataset' | 'training' | 'inference'>('session');
     const isNewExecutionRef = useRef(false); // 标记是否是新执行,防止状态累积
 
     // 加载历史消息或初始化
@@ -262,6 +263,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ actionName, initialPrompt, sessionI
         setTimeout(() => setIsConsoleOpen(true), 1500);
 
         await new Promise(r => setTimeout(r, 2000));
+        setActiveConsoleTab('training'); // Switch to Training tab for demo
         setSessionLogs([MOCK_TRAINING_STEPS[0]]);
         setMessages(prev => {
             const last = prev[prev.length - 1];
@@ -401,7 +403,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({ actionName, initialPrompt, sessionI
             let thoughtContent = '';
             let responseContent = '';
 
-            setTimeout(() => setIsConsoleOpen(true), 500);
+            setTimeout(() => {
+                setIsConsoleOpen(true);
+                // Proactively switch tab based on prompt content
+                if (userMessage.toLowerCase().includes('数据') || userMessage.toLowerCase().includes('dataset')) {
+                    setActiveConsoleTab('dataset');
+                } else if (userMessage.toLowerCase().includes('训练') || userMessage.toLowerCase().includes('train')) {
+                    setActiveConsoleTab('training');
+                } else if (userMessage.toLowerCase().includes('部署') || userMessage.toLowerCase().includes('deploy') || userMessage.toLowerCase().includes('inference')) {
+                    setActiveConsoleTab('inference');
+                } else {
+                    setActiveConsoleTab('session');
+                }
+            }, 500);
 
             while (true) {
                 const { done, value } = await reader.read();
@@ -1176,8 +1190,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ actionName, initialPrompt, sessionI
                         files={generatedFiles}
                         logs={sessionLogs}
                         currentSessionId={currentSessionId || undefined}
-                        onLogsUpdate={(updated) => setSessionLogs(updated)}
+                        onLogsUpdate={(updated) => setSessionLogs(updated as any)}
                         onTodosUpdate={(updated) => setTodos(updated)}
+                        activeTab={activeConsoleTab}
                     />
                 )}
             </AnimatePresence>

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Database, Search, ChevronDown, CheckCircle2, PanelLeft, Clock, Compass, User, LogIn, Loader2, History, Layers, Folder } from 'lucide-react';
+import { Plus, Database, Search, ChevronDown, CheckCircle2, PanelLeft, Clock, Compass, User, LogIn, Loader2, History, Layers, Folder, Activity } from 'lucide-react';
 import CreateWorkspaceModal from './CreateWorkspaceModal';
 import { sessionService } from '../api/sessions';
 import { workspaceApi, type Workspace } from '../api/workspaces';
@@ -282,6 +282,14 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
                         <Compass size={isCollapsed ? 20 : 18} />
                         {!isCollapsed && <span>技能中心</span>}
                     </button>
+                    <button
+                        onClick={() => onNavigate('processes')}
+                        className={`sidebar-item w-full ${isCollapsed ? 'w-10 h-10 justify-center p-0 rounded-xl' : ''} ${currentView === 'processes' ? 'bg-brand-50 text-brand-700' : ''}`}
+                        title={isCollapsed ? '后台任务监控' : undefined}
+                    >
+                        <Activity size={isCollapsed ? 20 : 18} />
+                        {!isCollapsed && <span>后台任务监控</span>}
+                    </button>
                 </div>
 
                 <div className={isCollapsed ? 'flex justify-center' : ''}>
@@ -292,7 +300,7 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
                                 className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors group"
                             >
                                 <div className="flex items-center gap-2">
-                                    <span>任务管理中心</span>
+                                    <span>数据资产</span>
                                 </div>
                                 <ChevronDown
                                     size={14}
@@ -304,31 +312,20 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
                                     onClick={() => onNavigate('datasets')}
                                     className={`sidebar-item w-full pl-8 ${currentView === 'datasets' ? 'bg-brand-50 text-brand-700' : ''}`}
                                 >
-                                    数据集构建
+                                    数据集资产
                                 </button>
                                 <button
                                     onClick={() => onNavigate('training')}
                                     className={`sidebar-item w-full pl-8 ${currentView === 'training' ? 'bg-brand-50 text-brand-700' : ''}`}
                                 >
-                                    任务追踪监控
+                                    训练模型权重
                                 </button>
-                                <button
-                                    onClick={() => onNavigate('overview')}
-                                    className={`sidebar-item w-full pl-8 ${currentView === 'overview' ? 'bg-brand-50 text-brand-700' : ''}`}
-                                >
-                                    推理部署可观测
-                                </button>
+
                                 <button
                                     onClick={() => onNavigate('evaluation')}
                                     className={`sidebar-item w-full pl-8 ${currentView === 'evaluation' ? 'bg-brand-50 text-brand-700' : ''}`}
                                 >
-                                    基准评测比较
-                                </button>
-                                <button
-                                    onClick={() => onNavigate('processes')}
-                                    className={`sidebar-item w-full pl-8 ${currentView === 'processes' ? 'bg-brand-50 text-brand-700' : ''}`}
-                                >
-                                    后台任务监控
+                                    评测结果榜单
                                 </button>
                                 <button
                                     onClick={() => onNavigate('knowledge')}
@@ -340,9 +337,9 @@ const Sidebar: React.FC<SidebarProps> = React.memo(({
                         </>
                     ) : (
                         <button
-                            onClick={() => onNavigate('library')}
-                            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${currentView === 'library' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100'}`}
-                            title="任务管理中心"
+                            onClick={() => onNavigate('datasets')}
+                            className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${currentView === 'datasets' || currentView === 'training' || currentView === 'evaluation' || currentView === 'knowledge' ? 'bg-brand-50 text-brand-700' : 'text-slate-500 hover:bg-slate-100'}`}
+                            title="数据资产"
                         >
                             <Database size={20} />
                         </button>

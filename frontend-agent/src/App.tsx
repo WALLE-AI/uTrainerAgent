@@ -8,14 +8,16 @@ import SkillCenterPage from './components/SkillCenterPage';
 import AuthPage from './components/AuthPage';
 import ProfilePage from './components/ProfilePage';
 import UserProfileModal from './components/UserProfileModal';
+import UserOverview from './components/profile/UserOverview';
 import HomePage from './components/HomePage';
 import KnowledgeBasePage from './components/KnowledgeBasePage';
 import { DatasetConstruction } from './components/llmops/DatasetConstruction';
 import { ModelEvaluation } from './components/llmops/ModelEvaluation';
 import { NewTrainingWizard } from './components/llmops/NewTrainingWizard';
-import { InferenceObservability } from './components/llmops/InferenceObservability';
+
 import { ProcessManager } from './components/llmops/ProcessManager';
 import { LlmOpsLayout } from './components/llmops/LlmOpsLayout';
+import { ModelWeights } from './components/llmops/ModelWeights';
 
 type ViewType = 'landing' | 'library' | 'session' | 'skills' | 'auth' | 'profile' | 'home' | 'knowledge' | 'overview' | 'datasets' | 'training' | 'evaluation' | 'processes';
 
@@ -151,12 +153,8 @@ function App() {
         )}
         {currentView === 'training' && (
           <LlmOpsLayout>
-            <div className="space-y-6">
-              <div className="flex justify-between items-center">
-                <div className="text-left">
-                  <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase leading-none">任务追踪监控 Monitoring</h1>
-                  <p className="mt-1 text-slate-500 font-medium text-xs">实时监控模型训练、评估与部署任务的生命周期。</p>
-                </div>
+            <div className="space-y-8">
+              <div className="flex justify-end mb-4">
                 <button
                   onClick={() => setIsTrainingWizardOpen(true)}
                   className="px-6 py-3 bg-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all active:scale-95 flex items-center gap-2"
@@ -166,30 +164,7 @@ function App() {
                 </button>
               </div>
 
-              {/* Mock Task List */}
-              <div className="grid grid-cols-1 gap-4">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="p-6 bg-white border border-slate-100 rounded-[32px] shadow-sm flex items-center justify-between group hover:border-indigo-200 transition-all">
-                    <div className="flex items-center gap-6">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center group-hover:bg-indigo-50 transition-colors">
-                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      </div>
-                      <div className="text-left">
-                        <h4 className="font-black text-slate-900 uppercase tracking-tight">llama3-sft-v{i}</h4>
-                        <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">Running • Epoch 2/3 • Loss: 0.0245</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-48 h-2 bg-slate-50 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-600" style={{ width: '65%' }} />
-                      </div>
-                      <button className="p-2 hover:bg-slate-50 rounded-xl text-slate-400">
-                        <span className="text-lg">→</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ModelWeights />
             </div>
 
             <NewTrainingWizard
@@ -215,10 +190,9 @@ function App() {
           />
         )}
         {currentView === 'overview' && user && (
-          <LlmOpsLayout>
-            <InferenceObservability />
-          </LlmOpsLayout>
+          <UserOverview user={user} onLogout={handleLogout} />
         )}
+
         {currentView === 'session' && (
           <ChatArea
             actionName={actionName}
